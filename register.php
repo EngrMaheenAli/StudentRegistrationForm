@@ -84,12 +84,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Handle errors and show alert in JavaScript
     if (!empty($errors)) {
-        $errorMessages = implode("\n", $error);
-        echo "<script>alert('Errors: \\n" . $errorMessages . "');</script>";
-        
-        // Redirect to index.php after showing error
-        header("Location: index.php");
-        exit;
+        $errorMessages = implode("\\n", $errors); // Corrected from `$error` to `$errors`
+        echo "<script>alert('Errors: \\n" . $errorMessages . "'); window.location.href='index.php';</script>";
+        exit; // Stop further execution after showing error and redirecting
     } else {
         // Prepare and bind only if there are no errors
         $stmt = $conn->prepare("INSERT INTO students (first_name, last_name, dob, email, mobile, gender, address, city, pin, state, country, hobbies, qualification, courses) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -99,10 +96,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Execute the statement
         if ($stmt->execute()) {
-            echo "Registration successful!";
-            
-            // Redirect to index.php after successful registration
-            header("Location: index.php");
+            echo "<script>alert('Registration successful!'); window.location.href='index.php';</script>";
             exit;
         } else {
             echo "Error: " . $stmt->error;

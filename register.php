@@ -16,26 +16,23 @@ if ($conn->connect_error) {
 $errors = []; 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Validate first name
-    if (empty(trim($_POST['firstName']))) {
+    // Sanitize and validate first name
+    $firstName = !empty(trim($_POST['firstName'])) ? htmlspecialchars(trim($_POST['firstName'])) : '';
+    if (empty($firstName)) {
         $errors[] = "First name is required.";
-    } else {
-        $firstName = trim($_POST['firstName']);
     }
 
-    // Validate last name
-    if (empty(trim($_POST['lastName']))) {
+    // Sanitize and validate last name
+    $lastName = !empty(trim($_POST['lastName'])) ? htmlspecialchars(trim($_POST['lastName'])) : '';
+    if (empty($lastName)) {
         $errors[] = "Last name is required.";
-    } else {
-        $lastName = trim($_POST['lastName']);
     }
 
-    // Validate email
-    if (empty(trim($_POST['email']))) {
+    // Sanitize and validate email
+    $email = !empty(trim($_POST['email'])) ? htmlspecialchars(trim($_POST['email'])) : '';
+    if (empty($email)) {
         $errors[] = "Email is required.";
     } else {
-        $email = trim($_POST['email']);
-        
         // Check if email already exists
         $emailCheckQuery = "SELECT * FROM students WHERE email = ?";
         $stmt = $conn->prepare($emailCheckQuery);
@@ -50,32 +47,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->close();
     }
 
-    // Validate mobile
-    if (empty(trim($_POST['mobile']))) {
+    // Sanitize and validate mobile
+    $mobile = !empty(trim($_POST['mobile'])) ? htmlspecialchars(trim($_POST['mobile'])) : '';
+    if (empty($mobile)) {
         $errors[] = "Mobile number is required.";
-    } else {
-        $mobile = trim($_POST['mobile']);
     }
 
-    // Validate DOB
+    // Validate DOB (Ensure it's in the correct format)
     if (empty(trim($_POST['year'])) || empty(trim($_POST['month'])) || empty(trim($_POST['day']))) {
         $errors[] = "Valid date of birth is required.";
     } else {
-        // Format DOB (YYYY-MM-DD)
         $dob = trim($_POST['year'] . '-' . $_POST['month'] . '-' . $_POST['day']);
-        // Check if the date is valid
         if (!strtotime($dob)) {
             $errors[] = "Invalid date of birth.";
         }
     }
 
-    // Initialize remaining fields
-    $gender = isset($_POST['gender']) ? trim($_POST['gender']) : '';
-    $address = isset($_POST['address']) ? trim($_POST['address']) : '';
-    $city = isset($_POST['city']) ? trim($_POST['city']) : '';
-    $pin = isset($_POST['pin']) ? trim($_POST['pin']) : '';
-    $state = isset($_POST['state']) ? trim($_POST['state']) : '';
-    $country = isset($_POST['country']) ? trim($_POST['country']) : '';
+    // Initialize remaining fields (sanitize where applicable)
+    $gender = isset($_POST['gender']) ? htmlspecialchars(trim($_POST['gender'])) : '';
+    $address = isset($_POST['address']) ? htmlspecialchars(trim($_POST['address'])) : '';
+    $city = isset($_POST['city']) ? htmlspecialchars(trim($_POST['city'])) : '';
+    $pin = isset($_POST['pin']) ? htmlspecialchars(trim($_POST['pin'])) : '';
+    $state = isset($_POST['state']) ? htmlspecialchars(trim($_POST['state'])) : '';
+    $country = isset($_POST['country']) ? htmlspecialchars(trim($_POST['country'])) : '';
 
     // Handle hobbies, qualification, and courses (optional)
     $hobbies = isset($_POST['hobbies']) ? json_encode($_POST['hobbies']) : json_encode([]);
@@ -90,7 +84,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         // Prepare and bind only if there are no errors
         $stmt = $conn->prepare("INSERT INTO students (first_name, last_name, dob, email, mobile, gender, address, city, pin, state, country, hobbies, qualification, courses) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        
+
         // Adjust bind_param to match the correct number of variables
         $stmt->bind_param("ssssssssssssss", $firstName, $lastName, $dob, $email, $mobile, $gender, $address, $city, $pin, $state, $country, $hobbies, $qualification, $courses);
 

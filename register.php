@@ -5,21 +5,6 @@ $username = "root";
 $password = ""; 
 $dbname = "srf"; 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
 
@@ -31,8 +16,6 @@ if ($conn->connect_error) {
 $errors = []; 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    var_dump($_POST); 
-
     // Validate first name
     if (empty(trim($_POST['firstName']))) {
         $errors[] = "First name is required.";
@@ -52,6 +35,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $errors[] = "Email is required.";
     } else {
         $email = trim($_POST['email']);
+        
+        // Check if email already exists
+        $emailCheckQuery = "SELECT * FROM students WHERE email = ?";
+        $stmt = $conn->prepare($emailCheckQuery);
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows > 0) {
+            $errors[] = "The email address is already registered.";
+        }
+
+        $stmt->close();
     }
 
     // Validate mobile
@@ -61,8 +57,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $mobile = trim($_POST['mobile']);
     }
 
-    // Format DOB (YYYY-MM-DD)
-    $dob = trim($_POST['year'] . '-' . $_POST['month'] . '-' . $_POST['day']);
+    // Validate DOB
+    if (empty(trim($_POST['year'])) || empty(trim($_POST['month'])) || empty(trim($_POST['day']))) {
+        $errors[] = "Valid date of birth is required.";
+    } else {
+        // Format DOB (YYYY-MM-DD)
+        $dob = trim($_POST['year'] . '-' . $_POST['month'] . '-' . $_POST['day']);
+        // Check if the date is valid
+        if (!strtotime($dob)) {
+            $errors[] = "Invalid date of birth.";
+        }
+    }
 
     // Initialize remaining fields
     $gender = isset($_POST['gender']) ? trim($_POST['gender']) : '';
@@ -77,9 +82,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $qualification = isset($_POST['qualification']) ? json_encode($_POST['qualification']) : json_encode([]);
     $courses = isset($_POST['course']) ? json_encode($_POST['course']) : json_encode([]);
 
-    // Prepare and bind only if there are no errors
-    if (empty($errors)) {
-        // Prepare and bind
+    // Handle errors and show alert in JavaScript
+    if (!empty($errors)) {
+        $errorMessages = implode("\n", $errors);
+        echo "<script>alert('Errors: \\n" . $errorMessages . "');</script>";
+        
+        // Redirect to index.php after showing errors
+        header("Location: index.php");
+        exit;
+    } else {
+        // Prepare and bind only if there are no errors
         $stmt = $conn->prepare("INSERT INTO students (first_name, last_name, dob, email, mobile, gender, address, city, pin, state, country, hobbies, qualification, courses) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         
         // Adjust bind_param to match the correct number of variables
@@ -88,17 +100,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Execute the statement
         if ($stmt->execute()) {
             echo "Registration successful!";
+            
+            // Redirect to index.php after successful registration
+            header("Location: index.php");
+            exit;
         } else {
             echo "Error: " . $stmt->error;
         }
 
         // Close the statement
         $stmt->close();
-    } else {
-        // Output errors
-        foreach ($errors as $error) {
-            echo "<p style='color:red;'>$error</p>";
-        }
     }
 }
 

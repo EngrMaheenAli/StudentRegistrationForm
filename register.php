@@ -84,10 +84,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Handle errors and show alert in JavaScript
     if (!empty($errors)) {
-        $errorMessages = implode("\n", $errors);
+        $errorMessages = implode("\n", $error);
         echo "<script>alert('Errors: \\n" . $errorMessages . "');</script>";
         
-        // Redirect to index.php after showing errors
+        // Redirect to index.php after showing error
         header("Location: index.php");
         exit;
     } else {
